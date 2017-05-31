@@ -1,0 +1,75 @@
+--ERROR SOME REPLY DOES NOT HAVE A VALID THREAD, MOST OF THEM ARE SPAMS
+DECLARE 
+  CURSOR c IS 
+  SELECT 
+    mwp.FORUM_THREAD_ID as FORUM_THREAD_ID,
+    mwpu.USERID as USERID,
+    REPLY_MESSAGE,
+    REPLY_TIMESTAMP,
+    1 as ispublished,
+    0 as isdeleted,
+    REPLY_ID
+  FROM PORTAL.TBL_FORUM_REPLY por
+  LEFT JOIN MWP_FORUM_THREAD mwp ON por.THREAD_ID = mwp.TEMP_ID
+  LEFT JOIN USERS mwpu ON mwpu.USERNAME = por.USER_NAME;
+  rc c%ROWTYPE;
+BEGIN
+  OPEN c;
+  LOOP
+  FETCH c INTO rc;
+  EXIT WHEN c%NOTFOUND;
+  
+  INSERT
+  INTO MWP_FORUM_THREAD_REPLY
+  (
+    FORUM_THREAD_ID,
+    FORUM_THREAD_USER_ID,
+    FORUM_THREAD_REPLY_MESSAGE,
+    FORUM_THREAD_REPLY_TIMESTAMP,
+    FORUM_THREAD_ISPUBLISHED,
+    FORUM_THREAD_ISEDELETED,
+    TEMP_ID
+  )
+  VALUES(rc.FORUM_THREAD_ID,rc.USERID,rc.REPLY_MESSAGE,rc.REPLY_TIMESTAMP,rc.ispublished,rc.isdeleted,rc.REPLY_ID);
+END LOOP; 
+COMMIT;
+END;
+
+
+-- begin
+--   for o in (SELECT FORUM_THREAD_ID,TEMP_ID FROM MWP_FORUM_THREAD)
+--   loop
+--     EXECUTE IMMEDIATE
+--     '
+--     INSERT
+--     INTO MWP_FORUM_THREAD_REPLY
+--     (
+--       FORUM_THREAD_ID,
+--       FORUM_THREAD_USER_ID,
+--       FORUM_THREAD_REPLY_MESSAGE,
+--       FORUM_THREAD_REPLY_TIMESTAMP,
+--       FORUM_THREAD_ISPUBLISHED,
+--       FORUM_THREAD_ISEDELETED,
+--       TEMP_ID
+--     )
+--     SELECT   
+--       '|| o.FORUM_THREAD_ID ||',
+--       mwp.USERID,
+--       REPLY_MESSAGE,
+--       REPLY_TIMESTAMP,
+--       1 as ispublished,
+--       0 as isdeleted,
+--       REPLY_ID
+--     FROM PORTAL.TBL_FORUM_REPLY por 
+--     LEFT JOIN MWP.USERS mwp ON mwp.USERNAME = por.USER_NAME
+--     WHERE THREAD_ID = '|| o.TEMP_ID;
+--   end loop;
+-- end;
+
+
+
+
+
+
+
+
