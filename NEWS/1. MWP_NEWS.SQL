@@ -1,24 +1,23 @@
-DECLARE 
-tablecount NUMBER;
-table_name = 
-DBMS_ERRLOG.create_error_log ('MWP_NEWS');
-BEGIN
+INSERT
+INTO MWP_NEWS
+  (
+    NEWS_TITLE,
+    NEWS_ISPUBLISHED,
+    NEWS_ISDELETED,
+    NEWS_FORUM_THREADID,
+    NEWS_TIMESTAMP,
+    TEMP_ID
+  )
 
-
-
-
-
-
-
-
-EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM  MWP_NEWSinto tablecount;
-IF tablecount = 0 THEN
-  EXECUTE IMMEDIATE 'drop table ' || empty_table.table_name;
-END IF;
-END;
-
-
-
+SELECT 
+  NEWS_TITLE,
+  1,
+  0,
+  mwp.FORUM_THREAD_ID ,
+  NEWS_TIMESTAMP,
+  NEWS_ID
+FROM PORTAL.TBL_NEWS por
+LEFT JOIN MWP_FORUM_THREAD mwp ON por.THREAD_ID = mwp.TEMP_ID;
 
 
 
