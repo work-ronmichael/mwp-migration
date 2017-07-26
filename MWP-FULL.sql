@@ -1,7 +1,21 @@
 DECLARE 
     tablecount NUMBER;
     cursor error_tables IS SELECT table_name FROM user_tables WHERE table_name LIKE 'ERR$%';
-
+    CURSOR long_to_char_faq_cat IS select * from xmltable
+    (
+    '/ROWSET/ROW'
+    passing dbms_xmlgen.getXMLType
+    (
+        'SELECT
+        FAQ_CATEGORY_ID,
+        FAQ_DESCRIPTION
+        FROM PORTAL.TBL_FAQ_CATEGORY'
+    )
+    columns
+        FAQ_CATEGORY_ID NUMBER(2, 0),
+        FAQ_DESCRIPTION  NVARCHAR2(255)
+    );
+	rc long_to_char_faq_cat%ROWTYPE;
 BEGIN
 
     --DROP ALL ERROR LOGS
@@ -356,9 +370,33 @@ BEGIN
     LEFT JOIN MWP.MWP_CMSBANNER curr ON prev.TEMPLATE_ID = curr.TEMP_ID;
     -- MWP_CMSBANNERCONTENT END
 
+    -- MWP_FAQCATEGORY START
+    INSERT
+    INTO MWP_FAQCATEGORY
+    (
+        FAQ_CATEGORY_NAME,
+        FAQ_ISPUBLISHED,
+        TEMP_ID
+    )
+    SELECT 
+        FAQ_CATEGORY_NAME,
+        FAQ_CATEGORY_STATUS,
+        FAQ_CATEGORY_ID
+    FROM PORTAL.TBL_FAQ_CATEGORY
+    LOG ERRORS INTO ERR$_MWP_FAQCATEGORY('INSERT') REJECT LIMIT UNLIMITED;
+
+    OPEN long_to_char_faq_cat;
+	LOOP
+        FETCH long_to_char_faq_cat INTO rc;
+        EXIT WHEN long_to_char_faq_cat%NOTFOUND;
+        UPDATE MWP_FAQCATEGORY
+        SET FAQ_DESCRIPTION = rc.FAQ_DESCRIPTION
+        WHERE TEMP_ID = rc.FAQ_CATEGORY_ID;
+    END LOOP;
+    -- MWP_FAQCATEGORY END
 
 
-
+    -- MWP_FAQ
 
 
 
