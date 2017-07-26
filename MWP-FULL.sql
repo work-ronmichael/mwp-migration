@@ -395,8 +395,26 @@ BEGIN
     END LOOP;
     -- MWP_FAQCATEGORY END
 
-
-    -- MWP_FAQ
+    -- MWP_FAQ START
+    INSERT
+    INTO MWP_FAQ
+    (
+        FAQ_CATEGORY_ID,
+        FAQ_QUESTION,
+        FAQ_ANSWER,
+        FAQ_ISPUBLISHED,
+        TEMP_ID
+    )
+    SELECT 
+        curr.FAQ_CATEGORY_ID,
+        FAQ_QUESTION,
+        FAQ_ANSWER_CLOB,
+        FAQ_STATUS,
+        FAQ_ID
+    FROM PORTAL.TBL_FAQS prev
+    LEFT JOIN MWP.MWP_FAQCATEGORY curr ON prev.FAQ_CATEGORY_ID = curr.TEMP_ID
+    WHERE curr.FAQ_CATEGORY_ID IS NOT NULL;
+    -- MWP_FAQ END
 
 
 
