@@ -530,6 +530,77 @@ BEGIN
 
 
 
+    -- MWP_THREADABLE START
+        -- GENERAL DISCUSSONS START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID
+        )
+        SELECT 
+            curr.THREADCATEGORYID as NEW_CATEGORY_ID,
+            THREAD_SUBJECT,
+            THREAD_TIMESTAMP,
+            USER_NAME,
+            THREAD_STATUS,
+            THREAD_ID
+        FROM PORTAL.TBL_FORUM_THREAD par
+        LEFT JOIN PORTAL.TBL_FORUM_CATEGORY chi ON par.THREAD_CATEGORY = chi.FORUM_CATEGORY_ID
+        LEFT JOIN MWP_THREADCATEGORY curr ON curr.THREADCATEGORYNAME = 'General Discussion'
+        WHERE chi.FORUM_CATEGORY_NAME = 'General Discussions';
+
+        UPDATE 
+        (
+            SELECT 
+                curr.THREADCONTENT,
+                prev.THREAD_MESSAGE_CLOB
+            FROM MWP_THREADABLE curr
+            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+            WHERE curr.THREADCATEGORYID = 1
+        )
+        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+        -- GENERAL DISCUSSONS END
+
+
+        -- NEWS DISCUSSONS START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID
+        )
+        SELECT 
+            curr.THREADCATEGORYID as NEW_CATEGORY_ID,
+            THREAD_SUBJECT,
+            THREAD_TIMESTAMP,
+            USER_NAME,
+            THREAD_STATUS,
+            THREAD_ID
+        FROM PORTAL.TBL_FORUM_THREAD par
+        LEFT JOIN PORTAL.TBL_FORUM_CATEGORY chi ON par.THREAD_CATEGORY = chi.FORUM_CATEGORY_ID
+        LEFT JOIN MWP_THREADCATEGORY curr ON curr.THREADCATEGORYNAME = 'News Discussion'
+        WHERE chi.FORUM_CATEGORY_NAME = 'News Discussions';
+
+        UPDATE 
+        (
+            SELECT 
+                curr.THREADCONTENT,
+                prev.THREAD_MESSAGE_CLOB
+            FROM MWP_THREADABLE curr
+            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+            WHERE curr.THREADCATEGORYID = 2
+        )
+        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+        -- NEWS DISCUSSONS END
 
 
 
@@ -541,8 +612,17 @@ BEGIN
 
 
 
+    -- MWP_THREADABLE END
 
-    -- MWP_THREADABLE
+
+
+
+
+
+
+
+
+    
     -- MWP_THREADABLEEVENT
     -- MWP_THREADABLEEVENTCAT
     -- MWP_THREADABLENEWS
