@@ -602,16 +602,117 @@ BEGIN
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
         -- NEWS DISCUSSONS END
 
+        -- EVENTS DISCUSSONS START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID
+        )
+
+        SELECT 
+            curr.THREADCATEGORYID as NEW_CATEGORY_ID,
+            THREAD_SUBJECT,
+            THREAD_TIMESTAMP,
+            USER_NAME,
+            THREAD_STATUS,
+            THREAD_ID
+        FROM PORTAL.TBL_FORUM_THREAD par
+        LEFT JOIN PORTAL.TBL_FORUM_CATEGORY chi ON par.THREAD_CATEGORY = chi.FORUM_CATEGORY_ID
+        LEFT JOIN MWP_THREADCATEGORY curr ON curr.THREADCATEGORYNAME = 'Event Discussion'
+        WHERE chi.FORUM_CATEGORY_NAME = 'Events Discussions';
+
+        UPDATE 
+        (
+            SELECT 
+                curr.THREADCONTENT,
+                prev.THREAD_MESSAGE_CLOB
+            FROM MWP_THREADABLE curr
+            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+            WHERE curr.THREADCATEGORYID = 3
+        )
+        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+        -- EVENTS DISCUSSONS END
 
 
+        -- SERVICES START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID
+        )
+
+        SELECT 
+            curr.THREADCATEGORYID as NEW_CATEGORY_ID,
+            THREAD_SUBJECT,
+            THREAD_TIMESTAMP,
+            USER_NAME,
+            THREAD_STATUS,
+            THREAD_ID
+        FROM PORTAL.TBL_FORUM_THREAD par
+        LEFT JOIN PORTAL.TBL_FORUM_CATEGORY chi ON par.THREAD_CATEGORY = chi.FORUM_CATEGORY_ID
+        LEFT JOIN MWP_THREADCATEGORY curr ON curr.THREADCATEGORYNAME = 'Services'
+        WHERE chi.FORUM_CATEGORY_NAME = 'Services';
 
 
+        UPDATE 
+        (
+            SELECT 
+                curr.THREADCONTENT,
+                prev.THREAD_MESSAGE_CLOB
+            FROM MWP_THREADABLE curr
+            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+            WHERE curr.THREADCATEGORYID = 4
+        )
+        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+
+        -- SERVICES END
 
 
+        --- COMMENTS AND SUGGESTIONS START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID
+        )
+
+        SELECT 
+            5,
+            THREAD_SUBJECT,
+            THREAD_TIMESTAMP,
+            USER_NAME,
+            THREAD_STATUS,
+            THREAD_ID
+        FROM PORTAL.TBL_FORUM_THREAD par
+        LEFT JOIN PORTAL.TBL_FORUM_CATEGORY chi ON par.THREAD_CATEGORY = chi.FORUM_CATEGORY_ID
+        WHERE chi.FORUM_CATEGORY_NAME = 'Comments and Suggestions';
 
 
-
-
+        UPDATE 
+        (
+            SELECT 
+                curr.THREADCONTENT,
+                prev.THREAD_MESSAGE_CLOB
+            FROM MWP_THREADABLE curr
+            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+            WHERE curr.THREADCATEGORYID = 5
+        )
+        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+        --- COMMENTS AND SUGGESTIONS END
     -- MWP_THREADABLE END
 
 
