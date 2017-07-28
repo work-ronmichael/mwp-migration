@@ -3,19 +3,35 @@ DECLARE
     cursor error_tables IS SELECT table_name FROM user_tables WHERE table_name LIKE 'ERR$%';
     CURSOR long_to_char_faq_cat IS select * from xmltable
     (
-    '/ROWSET/ROW'
-    passing dbms_xmlgen.getXMLType
-    (
-        'SELECT
-        FAQ_CATEGORY_ID,
-        FAQ_DESCRIPTION
-        FROM PORTAL.TBL_FAQ_CATEGORY'
-    )
-    columns
+        '/ROWSET/ROW'
+        passing dbms_xmlgen.getXMLType
+        (
+            'SELECT
+            FAQ_CATEGORY_ID,
+            FAQ_DESCRIPTION
+            FROM PORTAL.TBL_FAQ_CATEGORY'
+        )
+        columns
         FAQ_CATEGORY_ID NUMBER(2, 0),
         FAQ_DESCRIPTION  NVARCHAR2(255)
     );
 	rc long_to_char_faq_cat%ROWTYPE;
+
+    CURSOR long_to_char_event_cat IS select * from xmltable
+    (
+        '/ROWSET/ROW'
+        passing dbms_xmlgen.getXMLType
+        (
+            'SELECT 
+                CAL_CATEGORY_ID,
+                CAL_CATEGORY_DESCRIPTION
+            FROM PORTAL.TBL_CALENDAR_CATEGORY'
+        )
+        columns
+        CAL_CATEGORY_ID NUMBER(2, 0),
+        CAL_CATEGORY_DESCRIPTION  NVARCHAR2(100)
+    );
+    eventcar long_to_char_event_cat%ROWTYPE;
 BEGIN
 
     --DROP ALL ERROR LOGS
@@ -715,8 +731,29 @@ BEGIN
         --- COMMENTS AND SUGGESTIONS END
     -- MWP_THREADABLE END
 
+    
+    -- MWP_THREADABLEEVENTCAT START
+    INSERT
+    INTO MWP_THREADABLEEVENTCAT
+    (
+        EVENTCATEGORYNAME,
+        TEMP_ID
+    )
+    SELECT
+        CAL_CATEGORY_NAME,
+        CAL_CATEGORY_ID
+    FROM PORTAL.TBL_CALENDAR_CATEGORY ;
 
+    OPEN long_to_char_event_cat;
+    LOOP
+        FETCH long_to_char_event_cat INTO eventcar;
+        EXIT WHEN long_to_char_event_cat%NOTFOUND;
 
+        UPDATE MWP_THREADABLEEVENTCAT
+        SET EVENTCATEGORYDESC = eventcar.CAL_CATEGORY_DESCRIPTION
+        WHERE TEMP_ID = eventcar.CAL_CATEGORY_ID;
+    END LOOP;
+    -- MWP_THREADABLEEVENTCAT END
 
 
 
@@ -725,7 +762,7 @@ BEGIN
 
     
     -- MWP_THREADABLEEVENT
-    -- MWP_THREADABLEEVENTCAT
+    
     -- MWP_THREADABLENEWS
     -- MWP_THREADABLEREPLY
     -- MWP_THREADCATEGORY
