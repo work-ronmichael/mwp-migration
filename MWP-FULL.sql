@@ -32,6 +32,17 @@ DECLARE
         CAL_CATEGORY_DESCRIPTION  NVARCHAR2(100)
     );
     eventcar long_to_char_event_cat%ROWTYPE;
+
+  CURSOR threadrep IS SELECT 
+      curr.THREADID as NEW_THREADID,
+      USER_NAME,
+      prev.REPLY_MESSAGE,
+      REPLY_TIMESTAMP,
+      REPLY_ID as TEMP_ID
+  FROM PORTAL.TBL_FORUM_REPLY prev
+  LEFT JOIN MWP_THREADABLE  curr ON prev.THREAD_ID = curr.TEMP_ID AND curr.TEMP_ORIGIN IS NULL;
+  threadreprc threadrep%ROWTYPE;
+  
 BEGIN
 
     --DROP ALL ERROR LOGS
@@ -911,13 +922,33 @@ BEGIN
     SET NEWSEXCERP = NEWS_BODY_CLOB;
     -- MWP_THREADABLENEWS END
 
+    -- MWP_THREADABLEREPLY START
+    OPEN threadrep;
+    LOOP
+    FETCH threadrep INTO threadreprc;
+    EXIT WHEN threadrep%NOTFOUND;
+    INSERT
+    INTO MWP_THREADABLEREPLY
+    (
+        THREADID,
+        REPLYAUTHOR,
+        REPLYTIMESTAMP,
+        TEMP_REPLYCONTENT, --MOVED THE LONG DATA TYPE TO LONG TYPE COLUMN THEN AFTER THE INSERT CHANGED THE TYPE OF THIS TABLE TO CLOB
+        TEMP_ID
+    )
+    VALUES
+    (
+        threadreprc.NEW_THREADID,
+        threadreprc.USER_NAME,
+        threadreprc.REPLY_TIMESTAMP,
+        threadreprc.REPLY_MESSAGE,
+        threadreprc.TEMP_ID
+    );
+    end loop;
+    -- MWP_THREADABLEREPLY END
 
-
-
-
-
-    -- MWP_THREADABLEREPLY
     -- MWP_THREADCATEGORY
+
     -- MIGRATE CODES ENDS HERE
 
     -- MWP_IWANTTO
