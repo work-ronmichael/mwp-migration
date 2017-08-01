@@ -618,6 +618,32 @@ BEGIN
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
         -- NEWS DISCUSSONS END
 
+
+        -- NEWS ONLY START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID,
+            TEMP_ORIGIN
+        )
+        
+        SELECT 
+            2 as THREADCATEGORYID,
+            NEWS_TITLE,
+            NEWS_TIMESTAMP,
+            USER_NAME,
+            NEWS_STATUS,
+            NEWS_ID as TEMP_ID,
+            'NEWS' as TEMP_ORIGIN
+        FROM PORTAL.TBL_NEWS 
+        WHERE THREAD_ID = 0;
+        -- NEWS ONLY END
+
         -- EVENTS DISCUSSONS START
         INSERT
         INTO MWP_THREADABLE
@@ -653,6 +679,31 @@ BEGIN
         )
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
         -- EVENTS DISCUSSONS END
+
+        -- EVENTS ONLY START
+        INSERT
+        INTO MWP_THREADABLE
+        (
+            THREADCATEGORYID,
+            THREADTITLE,
+            THREADTIMESTAMP,
+            THREADABLEAUTHOR,
+            THREADISPUBLISHED,
+            TEMP_ID,
+            TEMP_ORIGIN
+        )
+
+        SELECT 
+            3 as THREADCATEGORYID,
+            CAL_SUBJECT,
+            CAL_STARTDATE,
+            USER_NAME,
+            CAL_EVENT_STATUS,
+            CAL_NUM AS TEMP_ID,
+            'EVENTS' AS TEMP_ORIGIN
+        FROM PORTAL.TBL_CALENDAR_EVENT 
+        WHERE THREAD_ID = 0;
+        -- EVENTS ONLY END
 
 
         -- SERVICES START
@@ -784,15 +835,87 @@ BEGIN
     LEFT JOIN MWP.MWP_THREADABLEEVENTCAT cat ON prev.CAL_CATEGORY_ID = cat.TEMP_ID
     WHERE THREAD_ID <> 0
     LOG ERRORS INTO ERR$_MWP_THREADABLEEVENT ('INSERT') REJECT LIMIT UNLIMITED;
+
+
+    INSERT
+    INTO MWP_THREADABLEEVENT
+    (
+        THREADID,
+        EVENTCATEGORYID,
+        EVENTSTARTTIME,
+        EVENTENDTIME,
+        EVENTURL,
+        EVENTPOSTSTARTTIME,
+        EVENTPOSTENDTIME,
+        TEMP_ID
+    )
+    SELECT 
+        THREADID as NEW_THREAD_ID,
+        currcat.EVENTCATEGORYID,
+        prev.CAL_EVENTSTART,
+        prev.CAL_EVENTEND,
+        prev.CAL_URL,
+        prev.CAL_STARTDATE,
+        prev.CAL_ENDDATE,
+        prev.CAL_NUM
+    FROM MWP_THREADABLE curr
+    LEFT JOIN PORTAL.TBL_CALENDAR_EVENT prev ON curr.TEMP_ID = prev.CAL_NUM
+    LEFT JOIN MWP_THREADABLEEVENTCAT currcat ON prev.CAL_CATEGORY_ID = currcat.TEMP_ID
+    WHERE TEMP_ORIGIN = 'EVENTS'
+    LOG ERRORS INTO ERR$_MWP_THREADABLEEVENT ('INSERT') REJECT LIMIT UNLIMITED;
+
     -- MWP_THREADABLEEVENT END
 
+    -- MWP_THREADABLENEWS START
+    INSERT
+    INTO MWP_THREADABLENEWS
+    (
+        THREADID,
+        TEMP_ID,
+        TEMP_PATH
+    )
+
+    SELECT 
+        curr.THREADID as NEW_THREAD_ID,
+        prev.NEWS_ID as OLD_ID,
+        pic.NEWS_PICTURE
+    FROM PORTAL.TBL_NEWS prev
+    LEFT JOIN MWP.MWP_THREADABLE curr ON prev.THREAD_ID = curr.TEMP_ID
+    LEFT JOIN PORTAL.TBL_NEWS_PICTURE pic ON prev.NEWS_ID = pic.NEWS_ID
+    WHERE prev.THREAD_ID <> 0;
+
+    INSERT
+    INTO MWP_THREADABLENEWS
+    (
+        THREADID,
+        TEMP_ID,
+        TEMP_PATH
+    )
+    SELECT 
+        THREADID,
+        TEMP_ID AS OLD_ID,
+        pic.NEWS_PICTURE
+    FROM MWP_THREADABLE curr
+    LEFT JOIN PORTAL.TBL_NEWS_PICTURE pic ON pic.NEWS_ID = curr.TEMP_ID
+    WHERE TEMP_ORIGIN = 'NEWS';
+
+    UPDATE 
+    (
+        SELECT 
+            prev.NEWS_BODY_CLOB,
+            curr.NEWSEXCERP
+            
+        FROM MWP_THREADABLENEWS curr
+        LEFT JOIN PORTAL.TBL_NEWS prev ON prev.NEWS_ID = curr.TEMP_ID
+    )
+    SET NEWSEXCERP = NEWS_BODY_CLOB;
+    -- MWP_THREADABLENEWS END
 
 
 
-    
-    
-    
-    -- MWP_THREADABLENEWS
+
+
+
     -- MWP_THREADABLEREPLY
     -- MWP_THREADCATEGORY
     -- MIGRATE CODES ENDS HERE
