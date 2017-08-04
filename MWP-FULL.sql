@@ -951,8 +951,73 @@ BEGIN
 
     -- MIGRATE CODES ENDS HERE
 
-    -- MWP_IWANTTO
-    -- MWP_IWANTTODTL
+    -- MWP_IWANTTO START
+    INSERT
+    INTO MWP_IWANTTO
+    (
+        IWANTTOTITLE,
+        IWANTTOORDER,
+        TEMP_ID
+    )
+
+    SELECT 
+        ONLINE_FORMS_TITLE,
+        ONLINE_FORMS_SORT_ORDER,
+        ONLINE_FORMS_ID as TEMP_ID
+    FROM PORTAL.TBL_ONLINE_FORMS ;
+    -- MWP_IWANTTO END
+
+
+    -- MWP_IWANTTODTL START
+        -- REQUIREMENT START
+            INSERT
+            INTO MWP_IWANTTODTL
+            (
+                IWANTTOID,
+                DTLTYPE,
+                DTLCONTENT
+            )
+
+            SELECT 
+                curr.IWANTTOID as NEW_ID,
+                'REQUIREMENT',
+                clob_to_blob(ONLINE_FORMS_REQUIREMENTS)
+            FROM PORTAL.TBL_ONLINE_FORMS prev
+            LEFT JOIN MWP.MWP_IWANTTO curr ON prev.ONLINE_FORMS_ID = curr.TEMP_ID;
+        -- REQUIREMENT END
+        -- PROCEDURES START
+            INSERT
+            INTO MWP_IWANTTODTL
+            (
+                IWANTTOID,
+                DTLTYPE,
+                DTLCONTENT
+            )
+
+            SELECT 
+                curr.IWANTTOID as NEW_ID,
+                'PROCEDURE',
+                clob_to_blob(ONLINE_FORMS_PROCEDURES)
+            FROM PORTAL.TBL_ONLINE_FORMS prev
+            LEFT JOIN MWP.MWP_IWANTTO curr ON prev.ONLINE_FORMS_ID = curr.TEMP_ID;
+        -- PROCEDURES END
+        -- APPLICATIONFORMS START
+        INSERT
+        INTO MWP_IWANTTODTL
+        (
+            IWANTTOID,
+            DTLTYPE,
+            TEMP_FILE
+        )
+        
+        SELECT 
+            curr.IWANTTOID as NEW_ID,
+            'APPLICATIONFORM',
+            ONLINE_FORMS_FILE
+        FROM PORTAL.TBL_ONLINE_FORMS prev
+        LEFT JOIN MWP.MWP_IWANTTO curr ON prev.ONLINE_FORMS_ID = curr.TEMP_ID;
+        -- APPLICATIONFORMS END
+    -- MWP_IWANTTODTL END
     COMMIT;
     -- DROP ALL EMPTY ERROR TABLES
     for empty_table in error_tables
