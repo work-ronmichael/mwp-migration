@@ -60,6 +60,8 @@ BEGIN
     -- MIGRATE CODES START HERE
 
     -- MWP_DYNAMIC_MENU START
+
+    -- PLEASE UPDATE THE MWP_CMSMENU_UK1 TO LOOK FOR DUPLICATE MENULABEL + MENUPARENT INSTEAD OF MENUALBEL ONLY
     DBMS_ERRLOG.create_error_log ('MWP_CMSMENU');
     INSERT
     INTO MWP_CMSMENU
@@ -110,7 +112,6 @@ BEGIN
     LEFT JOIN MWP.MWP_CMSMENU n_data ON o_data.FIRST_LEVEL_ID = n_data.TEMP_ID
     LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
 
-
     INSERT
     INTO MWP_CMSMENU
     (
@@ -122,17 +123,18 @@ BEGIN
         TEMP_CONTENT_ID,
         TEMP_LEVEL
     )
-    SELECT 
-        curr.MENUID as PARENT_ID,
-        MENU_LABEL,
-        MENU_SORT_ORDER,
-        MENU_STATUS,
-        MENU_ID,
-        CONTENT_ID,
-        3 as TEMP_LEVEL
-    FROM PORTAL.TBL_MENU_NEW prev
-    LEFT JOIN MWP.MWP_CMSMENU curr ON prev.SECOND_LEVEL_ID = curr.TEMP_ID
-    WHERE prev.MENU_PARENT = 0
+    
+    SELECT
+        new_data.MENUID,
+        old_data.menu_label,
+        old_data.menu_sort_order,
+        old_data.menu_status,
+        old_data.menu_id,
+        old_data.content_id,
+        3
+    FROM
+    portal.tbl_menu_new old_data
+    LEFT JOIN mwp_cmsmenu new_data ON old_data.second_level_id = new_data.TEMP_ID AND TEMP_LEVEL = 2
     LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
 
     INSERT
@@ -146,19 +148,24 @@ BEGIN
         TEMP_CONTENT_ID,
         TEMP_LEVEL
     )
-        
-    SELECT 
-        curr.MENUID as PARENT_ID,
-        MENU_LABEL,
-        MENU_SORT_ORDER,
-        MENU_STATUS,
-        MENU_ID,
-        CONTENT_ID,
-        4 as TEMP_LEVEL
-    FROM PORTAL.TBL_MENU_NEW prev
-    LEFT JOIN MWP.MWP_CMSMENU curr ON prev.MENU_PARENT = curr.TEMP_ID AND curr.TEMP_LEVEL = 3
-    WHERE prev.MENU_PARENT <> 0
+    
+    SELECT
+        new_data.MENUID,
+        old_data.menu_label,
+        old_data.menu_sort_order,
+        old_data.menu_status,
+        old_data.menu_id,
+        old_data.content_id,
+        4
+    FROM
+    portal.tbl_menu_new old_data
+    LEFT JOIN mwp_cmsmenu new_data ON old_data.MENU_PARENT = new_data.TEMP_ID AND TEMP_LEVEL = 3
     LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
+
+
+
+
+
     -- MWP_DYNAMIC_MENU END
 
     -- MWP_CMSCONTENT START
