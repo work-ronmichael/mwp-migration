@@ -694,7 +694,6 @@ BEGIN
 			FROM MWP_THREADABLE curr
 			LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
 			LEFT JOIN mwp_threadcategory cat on cat.threadcategoryid = curr.THREADCATEGORYID
-				
 			WHERE cat.THREADCATEGORYNAME = 'General Discussions'
 		)
 		SET THREADCONTENT = THREAD_MESSAGE_CLOB;
@@ -727,11 +726,12 @@ BEGIN
         UPDATE 
         (
             SELECT 
-                curr.THREADCONTENT,
-                prev.THREAD_MESSAGE_CLOB
-            FROM MWP_THREADABLE curr
-            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
-            WHERE curr.THREADCATEGORYID = 27
+				curr.THREADCONTENT,
+				prev.THREAD_MESSAGE_CLOB
+			FROM MWP_THREADABLE curr
+			LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+			LEFT JOIN mwp_threadcategory cat on cat.threadcategoryid = curr.THREADCATEGORYID
+			WHERE cat.THREADCATEGORYNAME = 'News Discussions'
         )
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
         -- NEWS DISCUSSONS END
