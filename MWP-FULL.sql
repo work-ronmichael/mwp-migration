@@ -749,17 +749,16 @@ BEGIN
             TEMP_ID,
             TEMP_ORIGIN
         )
-        
         SELECT 
-            27 as THREADCATEGORYID,
-            NEWS_TITLE,
-            NEWS_TIMESTAMP,
-            USER_NAME,
-            NEWS_STATUS,
-            NEWS_ID as TEMP_ID,
-            'NEWS' as TEMP_ORIGIN
-        FROM PORTAL.TBL_NEWS 
-        WHERE THREAD_ID = 0;
+			cat.threadcategoryid,
+			NEWS_TITLE,
+			NEWS_TIMESTAMP,
+			USER_NAME,
+			NEWS_STATUS,
+			NEWS_ID as TEMP_ID,
+			'NEWS' as TEMP_ORIGIN
+		FROM PORTAL.TBL_NEWS
+		LEFT JOIN mwp_threadcategory cat on cat.THREADCATEGORYNAME = 'News Discussions'
         -- NEWS ONLY END
 
         -- EVENTS DISCUSSONS START
