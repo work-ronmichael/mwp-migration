@@ -812,15 +812,15 @@ BEGIN
         )
 
         SELECT 
-            28 as THREADCATEGORYID,
-            CAL_SUBJECT,
-            CAL_STARTDATE,
-            USER_NAME,
-            CAL_EVENT_STATUS,
-            CAL_NUM AS TEMP_ID,
-            'EVENTS' AS TEMP_ORIGIN
-        FROM PORTAL.TBL_CALENDAR_EVENT 
-        WHERE THREAD_ID = 0;
+			cat.THREADCATEGORYID,
+			CAL_SUBJECT,
+			CAL_STARTDATE,
+			USER_NAME,
+			CAL_EVENT_STATUS,
+			CAL_NUM AS TEMP_ID,
+			'EVENTS' AS TEMP_ORIGIN
+		FROM PORTAL.TBL_CALENDAR_EVENT 
+		LEFT JOIN mwp_threadcategory cat on cat.THREADCATEGORYNAME = 'Events Discussions'
         -- EVENTS ONLY END
 
 
