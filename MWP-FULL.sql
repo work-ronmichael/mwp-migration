@@ -737,7 +737,7 @@ BEGIN
         -- NEWS DISCUSSONS END
 
 
-        -- NEWS ONLY START
+        -- NEWS ONLY START xxxx
         INSERT
         INTO MWP_THREADABLE
         (
@@ -750,15 +750,24 @@ BEGIN
             TEMP_ORIGIN
         )
         SELECT 
-			cat.threadcategoryid,
-			NEWS_TITLE,
-			NEWS_TIMESTAMP,
-			USER_NAME,
-			NEWS_STATUS,
-			NEWS_ID as TEMP_ID,
-			'NEWS' as TEMP_ORIGIN
-		FROM PORTAL.TBL_NEWS
-		LEFT JOIN mwp_threadcategory cat on cat.THREADCATEGORYNAME = 'News Discussions'
+            cat.threadcategoryid,
+            NEWS_TITLE,
+            NEWS_TIMESTAMP,
+            USER_NAME,
+            NEWS_STATUS,
+            NEWS_ID as TEMP_ID,
+            'NEWS_NO_THREAD' as TEMP_ORIGIN
+        FROM PORTAL.TBL_NEWS
+        LEFT JOIN mwp_threadcategory cat on cat.THREADCATEGORYNAME = 'News Discussions'
+        WHERE  PORTAL.TBL_NEWS.THREAD_ID = 0
+
+        for x in (SELECT news_id,news_body_clob FROM portal.tbl_news WHERE THREAD_ID = 0)
+        loop
+            UPDATE mwp_threadable
+            SET threadcontent = x.news_body_clob
+            WHERE TEMP_ID = x.news_id AND TEMP_ORIGIN =  'NEWS_NO_THREAD';
+        end loop;
+
         -- NEWS ONLY END
 
         -- EVENTS DISCUSSONS START
@@ -1000,21 +1009,21 @@ BEGIN
 
     -- MWP_THREADABLENEWS START
 	
-	INSERT
-    INTO ERR_MWP_THREADABLENEWS
-    (
-        THREADID,
-        TEMP_ID,
-        TEMP_PATH
-    )
-	SELECT 
-        curr.THREADID as NEW_THREAD_ID,
-        prev.NEWS_ID as OLD_ID,
-        pic.NEWS_PICTURE
-    FROM PORTAL.TBL_NEWS prev
-    LEFT JOIN MWP.MWP_THREADABLE curr ON prev.THREAD_ID = curr.TEMP_ID AND curr.TEMP_ORIGIN = 'NEWS'
-    LEFT JOIN PORTAL.TBL_NEWS_PICTURE pic ON prev.NEWS_ID = pic.NEWS_ID
-    WHERE prev.THREAD_ID = 0;
+	-- INSERT
+    -- INTO ERR_MWP_THREADABLENEWS
+    -- (
+    --     THREADID,
+    --     TEMP_ID,
+    --     TEMP_PATH
+    -- )
+	-- SELECT 
+    --     curr.THREADID as NEW_THREAD_ID,
+    --     prev.NEWS_ID as OLD_ID,
+    --     pic.NEWS_PICTURE
+    -- FROM PORTAL.TBL_NEWS prev
+    -- LEFT JOIN MWP.MWP_THREADABLE curr ON prev.THREAD_ID = curr.TEMP_ID AND curr.TEMP_ORIGIN = 'NEWS'
+    -- LEFT JOIN PORTAL.TBL_NEWS_PICTURE pic ON prev.NEWS_ID = pic.NEWS_ID
+    -- WHERE prev.THREAD_ID = 0;
 	
 	
     INSERT
