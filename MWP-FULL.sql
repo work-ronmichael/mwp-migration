@@ -786,17 +786,18 @@ BEGIN
         WHERE chi.FORUM_CATEGORY_NAME = 'Events Discussions';
 
         UPDATE 
-        (
-            SELECT 
-                curr.THREADCONTENT,
-                prev.THREAD_MESSAGE_CLOB
-            FROM MWP_THREADABLE curr
-            LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
-            WHERE curr.THREADCATEGORYID = 3
-        )
-        SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+		(
+		   SELECT 
+				curr.THREADCONTENT,
+				prev.THREAD_MESSAGE_CLOB
+			FROM MWP_THREADABLE curr
+			LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
+			LEFT JOIN mwp_threadcategory cat on cat.threadcategoryid = curr.THREADCATEGORYID
+			WHERE cat.THREADCATEGORYNAME = 'Events Discussions'
+		)
+		SET THREADCONTENT = THREAD_MESSAGE_CLOB;
         -- EVENTS DISCUSSONS END
-
+		
         -- EVENTS ONLY START
         INSERT
         INTO MWP_THREADABLE
