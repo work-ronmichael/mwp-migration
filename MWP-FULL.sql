@@ -835,7 +835,6 @@ BEGIN
             THREADISPUBLISHED,
             TEMP_ID
         )
-
         SELECT 
             curr.THREADCATEGORYID as NEW_CATEGORY_ID,
             THREAD_SUBJECT,
@@ -848,7 +847,7 @@ BEGIN
         LEFT JOIN MWP_THREADCATEGORY curr ON curr.THREADCATEGORYNAME = 'Services'
         WHERE chi.FORUM_CATEGORY_NAME = 'Services';
 
-
+		
         UPDATE 
         (
             SELECT 
@@ -856,7 +855,8 @@ BEGIN
                 prev.THREAD_MESSAGE_CLOB
             FROM MWP_THREADABLE curr
             LEFT JOIN PORTAL.TBL_FORUM_THREAD prev on curr.TEMP_ID = prev.THREAD_ID
-            WHERE curr.THREADCATEGORYID = 29
+			LEFT JOIN mwp_threadcategory cat on cat.threadcategoryid = curr.THREADCATEGORYID
+			WHERE cat.THREADCATEGORYNAME = 'Services'
         )
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
 
