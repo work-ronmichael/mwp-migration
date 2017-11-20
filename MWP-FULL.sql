@@ -413,19 +413,33 @@ BEGIN
     LEFT JOIN MWP.MWP_DLCONTENT curr on curr.TEMP_ID = prev.DOWNLOADS_ID
     WHERE curr.DLCONTENTID IS NULL;
 	
-	
-    INSERT
-    INTO MWP_DLCONTENTFILE
-    (
-        DLCONTENTID,
-        TEMP_FILE
-    )
-    SELECT 
-        curr.DLCONTENTID,
-        DOWNLOADS_PDF
-    FROM PORTAL.TBL_DOWNLOADS prev
-    LEFT JOIN MWP.MWP_DLCONTENT curr on curr.TEMP_ID = prev.DOWNLOADS_ID
-    WHERE curr.DLCONTENTID IS NOT NULL;
+	-- SELECT THE MAX VERSION PRIOR TO INSERT
+    INSERT INTO mwp.mwp_dlcontentfile (
+		dlcontentid,
+		temp_file,
+		temp_version,
+		temp_id
+	)
+	select 
+		curr.DLCONTENTID,
+		PDF_NAME as temp_file,
+		VERSION_ID as temp_version,
+		downloads_id as temp_id
+	from (
+		SELECT
+			dl.downloads_id as downloads_id,
+			dl.downloads_title as downloads_title,
+			re.PDF_NAME as PDF_NAME,
+			vs.VERSION_ID,
+			max(vs.VERSION_ID) over (partition by dl.downloads_id) as latest_version
+		FROM
+			tbl_downloads dl
+		LEFT join tbl_downloads_version vs ON dl.DOWNLOADS_ID = vs.DOWNLOADS_ID
+		LEFT join tbl_downloads_pdf re ON vs.VERSION_ID = re.VERSION_ID 
+	) prev
+	LEFT JOIN MWP.MWP_DLCONTENT curr on curr.TEMP_ID = prev.DOWNLOADS_ID
+	WHERE VERSION_ID = latest_version 
+	AND curr.DLCONTENTID IS NOT NULL
     -- MWP_DLCONTENTFILE END
 
     -- MWP_CMSBANNER START
