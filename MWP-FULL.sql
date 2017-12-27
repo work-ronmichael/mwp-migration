@@ -433,9 +433,9 @@ BEGIN
 			vs.VERSION_ID,
 			max(vs.VERSION_ID) over (partition by dl.downloads_id) as latest_version
 		FROM
-			tbl_downloads dl
-		LEFT join tbl_downloads_version vs ON dl.DOWNLOADS_ID = vs.DOWNLOADS_ID
-		LEFT join tbl_downloads_pdf re ON vs.VERSION_ID = re.VERSION_ID 
+			portal.tbl_downloads dl
+		LEFT join portal.tbl_downloads_version vs ON dl.DOWNLOADS_ID = vs.DOWNLOADS_ID
+		LEFT join portal.tbl_downloads_pdf re ON vs.VERSION_ID = re.VERSION_ID 
 	) prev
 	LEFT JOIN MWP.MWP_DLCONTENT curr on curr.TEMP_ID = prev.DOWNLOADS_ID
 	WHERE VERSION_ID = latest_version 
@@ -585,6 +585,22 @@ BEGIN
     LEFT JOIN MWP.MWP_MCGALLERYALBUM curr ON prev.GALLERY_IMAGE_ALBUM = curr.TEMP_ID;
     -- MWP_MCGALLERYIMAGE END
 
+    -- GALLERY ALBUM ADD THUMBNAIL
+    for x in (SELECT
+            new_img.ALBUMID as NEW_ALBUMID,
+            new_img.imageid as NEW_IMAGE_ID
+          FROM
+              portal.tbl_photo_gallery_image old_img
+          LEFT JOIN mwp_mcgalleryimage new_img ON old_img.GALLERY_IMAGE_ID = new_img.TEMP_ID
+          WHERE gallery_image_status = 2)
+    loop
+    
+            UPDATE MWP_MCGALLERYALBUM
+            SET ALBUMTHUMBNAIL = x.NEW_IMAGE_ID
+            WHERE ALBUMID = x.NEW_ALBUMID;
+    end loop;
+    -- GALLERY ALBUM ADD THUMBNAIL
+    
     -- MWP_MCPHOTORELEASE START
     INSERT
     INTO MWP_MCPHOTORELEASE
