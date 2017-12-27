@@ -558,7 +558,7 @@ BEGIN
     )
     SELECT 
         GALLERY_ALBUM_NAME,
-        GALLERY_ALBUM_EVENT_DATE,
+        GALLERY_ALBUM_DATE,
         GALLERY_ALBUM_STATUS,
         GALLERY_ALBUM_ID
     FROM PORTAL.TBL_PHOTO_GALLERY_ALBUM
@@ -600,6 +600,21 @@ BEGIN
             WHERE ALBUMID = x.NEW_ALBUMID;
     end loop;
     -- GALLERY ALBUM ADD THUMBNAIL
+
+    -- ADD GALLERY ALBUM
+    UPDATE (
+
+    SELECT
+        TEMP_FOLDER,
+        temp_id ||
+        to_char(albumeventdate,  'yyyymmdd')
+        AS NEW_TEMP_FOLDER
+    FROM
+        mwp_mcgalleryalbum
+    )
+    set TEMP_FOLDER = NEW_TEMP_FOLDER
+    -- END GALLERY ALBUM
+
     
     -- MWP_MCPHOTORELEASE START
     INSERT
@@ -1237,3 +1252,15 @@ END;
 
 
     
+
+
+
+
+
+
+
+
+
+
+
+
