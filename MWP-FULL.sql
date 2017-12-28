@@ -585,7 +585,7 @@ BEGIN
     LEFT JOIN MWP.MWP_MCGALLERYALBUM curr ON prev.GALLERY_IMAGE_ALBUM = curr.TEMP_ID;
     -- MWP_MCGALLERYIMAGE END
 
-    -- GALLERY ALBUM ADD THUMBNAIL
+    -- GALLERY ALBUM ADD THUMBNAIL ON FEATURED
     for x in (SELECT
             new_img.ALBUMID as NEW_ALBUMID,
             new_img.imageid as NEW_IMAGE_ID
@@ -599,7 +599,21 @@ BEGIN
             SET ALBUMTHUMBNAIL = x.NEW_IMAGE_ID, ISFEATURED = 1
             WHERE ALBUMID = x.NEW_ALBUMID;
     end loop;
-    -- GALLERY ALBUM ADD THUMBNAIL
+    -- GALLERY ALBUM ADD THUMBNAIL ON FEATURED
+
+
+    -- GALLERY ALBUM ADD THUMBNAIL NON FEATURED
+    for x in (SELECT
+                    album.ALBUMID,
+                    img.img.IMAGEID
+                FROM
+                    mwp_mcgalleryalbum album
+                LEFT JOIN mwp_mcgalleryimage img ON album.albumid = img.ALBUMID AND rownum = 1
+                WHERE isfeatured = 0)
+    loop
+        UPDATE mwp_mcgalleryalbum SET ALBUMTHUMBNAIL = x.IMAGEID  WHERE albumid = x.ALBUMID;
+    end loop;
+    -- GALLERY ALBUM ADD THUMBNAIL NON FEATURED
 
     -- ADD GALLERY ALBUM
     UPDATE (
