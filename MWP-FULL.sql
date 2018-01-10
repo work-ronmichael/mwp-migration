@@ -194,6 +194,21 @@ BEGIN
         FROM PORTAL.TBL_MENU_CONTENT_NEW 
         WHERE ERR_MWP_CMSCONTENT.TEMP_ID = PORTAL.TBL_MENU_CONTENT_NEW.CONTENT_ID
     );
+
+
+    -- CASCADE THE UNPUBLISHED STATUS TO ITS TREE
+    for x in (SELECT MENUID, MENUPARENT, MENULABEL, MENUORDER, ISPUBLISHED FROM mwp_cmsmenu START WITH menuid = menuparent CONNECT BY NOCYCLE PRIOR menuid = menuparent ORDER BY menuorder, menuparent)
+    loop
+    
+        if x.ISPUBLISHED = 0 THEN
+            for y in (SELECT MENUID, MENUPARENT, MENULABEL, MENUORDER, ISPUBLISHED FROM mwp_cmsmenu START WITH menuid = x.MENUID CONNECT BY NOCYCLE PRIOR menuid = menuparent ORDER BY menuorder, menuparent)
+            loop
+                UPDATE mwp_cmsmenu SET ISPUBLISHED = 0 WHERE MENUID = y.MENUID;
+            end loop;
+        END IF;
+    end loop;
+
+
 	-- MWP_ERR_CMSCONTENT END
 	
 	
@@ -670,6 +685,12 @@ BEGIN
         PIC_LARGE
     FROM MWP_MCPHOTORELEASE curr
     LEFT JOIN PORTAL.TBL_BLOG_PIC prev ON curr.TEMP_ID = prev.BLOG_ID;
+
+    -- REMOVE THE up folder from releaseimg
+    for x in (SELECT photoid, REPLACE(temp_path, '../uploads/', '') as new_path FROM mwp_mcphotoreleaseimg WHERE temp_path like '../uploads%' )
+    loop
+        UPDATE mwp_mcphotoreleaseimg SET temp_path = x.new_path WHERE photoid = x.photoid;
+    end loop;
     -- MWP_MCPHOTORELEASEIMG END
 
     -- MWP_MCSPEECHES START
