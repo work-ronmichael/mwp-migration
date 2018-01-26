@@ -89,9 +89,12 @@ BEGIN
     SET MENUPARENT = MENUID
     WHERE MENUPARENT = 0;
 
-    INSERT
-    INTO MWP_CMSMENU
-    (
+    --NEW LEVEL 2 IMPORT
+    for x in (SELECT menuid, temp_id FROM mwp_cmsmenu WHERE TEMP_LEVEL = 1)
+    loop
+        INSERT
+        INTO MWP_CMSMENU
+        (
         MENUPARENT,
         MENULABEL,
         MENUORDER,
@@ -99,22 +102,54 @@ BEGIN
         TEMP_ID,
         TEMP_CONTENT_ID,
         TEMP_LEVEL
-    )
-    SELECT 
-    n_data.MENUID as PARENT_ID,
-    SECOND_LEVEL_LABEL,
-    SECOND_LEVEL_SORT_ORDER,
-    SECOND_LEVEL_STATUS,
-    SECOND_LEVEL_ID,
-    CONTENT_ID,
-    2 as TEMP_LEVEL
-    FROM PORTAL.TBL_MENU_SECOND_LEVEL_NEW o_data
-    LEFT JOIN MWP.MWP_CMSMENU n_data ON o_data.FIRST_LEVEL_ID = n_data.TEMP_ID
-    LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
+        )
+        SELECT 
+            x.menuid,
+            SECOND_LEVEL_LABEL,
+            SECOND_LEVEL_SORT_ORDER,
+            SECOND_LEVEL_STATUS,
+            SECOND_LEVEL_ID,
+            CONTENT_ID,
+            2 as TEMP_LEVEL
+        FROM PORTAL.TBL_MENU_SECOND_LEVEL_NEW
+        WHERE FIRST_LEVEL_ID = x.temp_id;
+    end loop;
 
-    INSERT
-    INTO MWP_CMSMENU
-    (
+
+    -- IMPORT LEVEL 3 V2
+
+    for x in (SELECT menuid, temp_id FROM mwp_cmsmenu WHERE TEMP_LEVEL = 2)
+        loop
+            INSERT
+            INTO MWP_CMSMENU
+            (
+            MENUPARENT,
+            MENULABEL,
+            MENUORDER,
+            ISPUBLISHED,
+            TEMP_ID,
+            TEMP_CONTENT_ID,
+            TEMP_LEVEL
+            )
+            SELECT 
+                x.menuid,
+                menu_label,
+                menu_sort_order,
+                menu_status,
+                menu_id,
+                content_id,
+                3 as TEMP_LEVEL
+            FROM PORTAL.tbl_menu_new
+            WHERE second_level_id = x.temp_id AND MENU_PARENT = 0;
+        end loop;
+    end;
+
+    --NEW LEVEL 4 IMPORT
+    for x in (SELECT menuid, temp_id FROM mwp_cmsmenu WHERE TEMP_LEVEL = 3)
+    loop
+        INSERT
+        INTO MWP_CMSMENU
+        (
         MENUPARENT,
         MENULABEL,
         MENUORDER,
@@ -122,47 +157,98 @@ BEGIN
         TEMP_ID,
         TEMP_CONTENT_ID,
         TEMP_LEVEL
-    )
-    
-    SELECT
-        new_data.MENUID,
-        old_data.menu_label,
-        old_data.menu_sort_order,
-        old_data.menu_status,
-        old_data.menu_id,
-        old_data.content_id,
-        3
-    FROM
-    portal.tbl_menu_new old_data
-    LEFT JOIN mwp_cmsmenu new_data ON old_data.second_level_id = new_data.TEMP_ID AND TEMP_LEVEL = 2
-    LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
+        )
+        SELECT 
+            x.menuid,
+            menu_label,
+            menu_sort_order,
+            menu_status,
+            menu_id,
+            content_id,
+            4 as TEMP_LEVEL
+        FROM PORTAL.tbl_menu_new
+        WHERE MENU_PARENT = x.temp_id ;
+    end loop;
 
-    INSERT
-    INTO MWP_CMSMENU
-    (
-        MENUPARENT,
-        MENULABEL,
-        MENUORDER,
-        ISPUBLISHED,
-        TEMP_ID,
-        TEMP_CONTENT_ID,
-        TEMP_LEVEL
-    )
-    
-    SELECT
-        new_data.MENUID,
-        old_data.menu_label,
-        old_data.menu_sort_order,
-        old_data.menu_status,
-        old_data.menu_id,
-        old_data.content_id,
-        4
-    FROM
-    portal.tbl_menu_new old_data
-    LEFT JOIN mwp_cmsmenu new_data ON old_data.MENU_PARENT = new_data.TEMP_ID AND TEMP_LEVEL = 3
-    LOG ERRORS INTO ERR$_MWP_CMSMENU ('INSERT') REJECT LIMIT UNLIMITED;
+    -- LEVEL 5 IMPORT
+    begin
+    for x in (SELECT menuid, temp_id FROM mwp_cmsmenu WHERE TEMP_LEVEL = 4)
+        loop
+            INSERT
+            INTO MWP_CMSMENU
+            (
+            MENUPARENT,
+            MENULABEL,
+            MENUORDER,
+            ISPUBLISHED,
+            TEMP_ID,
+            TEMP_CONTENT_ID,
+            TEMP_LEVEL
+            )
+            SELECT 
+                x.menuid,
+                menu_label,
+                menu_sort_order,
+                menu_status,
+                menu_id,
+                content_id,
+                5 as TEMP_LEVEL
+            FROM PORTAL.tbl_menu_new
+            WHERE MENU_PARENT = x.temp_id ;
+        end loop;
+    end;
+
+    -- LEVEL 6 IMPORT
+    begin
+    for x in (SELECT menuid, temp_id FROM mwp_cmsmenu WHERE TEMP_LEVEL = 5)
+        loop
+            INSERT
+            INTO MWP_CMSMENU
+            (
+            MENUPARENT,
+            MENULABEL,
+            MENUORDER,
+            ISPUBLISHED,
+            TEMP_ID,
+            TEMP_CONTENT_ID,
+            TEMP_LEVEL
+            )
+            SELECT 
+                x.menuid,
+                menu_label,
+                menu_sort_order,
+                menu_status,
+                menu_id,
+                content_id,
+                6 as TEMP_LEVEL
+            FROM PORTAL.tbl_menu_new
+            WHERE MENU_PARENT = x.temp_id ;
+        end loop;
+    end;
 
 
+    -- UNPUBLISHED ALL MENU WITHOUT SORT
+    -- UPDATE MWP_CMSMENU SET ISPUBLISHED = 0 WHERE MENUORDER = 0;
+
+    -- CASCADE THE UNPUBLISHED STATUS TO ITS TREE
+    for x in (SELECT
+                    menuid,
+                    menuparent,
+                    menulabel,
+                    menuorder,
+                    ispublished,
+                    temp_id,
+                    temp_content_id,
+                    temp_level
+                FROM mwp_cmsmenu
+                WHERE ispublished = 0)
+        loop
+                for y in (SELECT MENUID, MENUPARENT, MENULABEL, MENUORDER, ISPUBLISHED FROM mwp_cmsmenu START WITH menuid = x.MENUID CONNECT BY NOCYCLE PRIOR menuid = menuparent ORDER BY menuorder, menuparent)
+                loop
+                    UPDATE mwp_cmsmenu SET ISPUBLISHED = 0 WHERE MENUID = y.MENUID;
+                end loop;
+        end loop;
+    -- END CASCADING UNPUBLISHED
 
 
 
@@ -196,18 +282,6 @@ BEGIN
     );
 
 
-    -- CASCADE THE UNPUBLISHED STATUS TO ITS TREE
-    for x in (SELECT MENUID, MENUPARENT, MENULABEL, MENUORDER, ISPUBLISHED FROM mwp_cmsmenu START WITH menuid = menuparent CONNECT BY NOCYCLE PRIOR menuid = menuparent ORDER BY menuorder, menuparent)
-    loop
-    
-        if x.ISPUBLISHED = 0 THEN
-            for y in (SELECT MENUID, MENUPARENT, MENULABEL, MENUORDER, ISPUBLISHED FROM mwp_cmsmenu START WITH menuid = x.MENUID CONNECT BY NOCYCLE PRIOR menuid = menuparent ORDER BY menuorder, menuparent)
-            loop
-                UPDATE mwp_cmsmenu SET ISPUBLISHED = 0 WHERE MENUID = y.MENUID;
-            end loop;
-        END IF;
-    end loop;
-
 
 	-- MWP_ERR_CMSCONTENT END
 	
@@ -237,6 +311,30 @@ BEGIN
         FROM PORTAL.TBL_MENU_CONTENT_NEW 
         WHERE MWP_CMSCONTENT.TEMP_ID = PORTAL.TBL_MENU_CONTENT_NEW.CONTENT_ID
     );
+    --APPEND ASSETS ON WYSIWIG DATAS
+    -- P0003
+    update mwp_cmscontent 
+        set contentdetail = replace(contentdetail,'../uploads','/assets/uploads') 
+    WHERE contentdetail like '%../uploads%';
+        
+
+    -- UPDATE URL LINKS TO START WITH http
+    --UPDATE ALL the links WITHOUT slash on the begining
+    -- P0001
+    UPDATE mwp_cmscontent
+    SET
+            CONTENTDETAIL = 'http://www.makati.gov.ph/' || CONTENTDETAIL
+    WHERE CONTENTTYPE = 3 
+    AND CONTENTDETAIL NOT LIKE '/%' 
+    AND CONTENTDETAIL NOT LIKE 'http%';
+
+    --UPDATE ALL the links WITH slash on the begining
+    -- P0002
+    UPDATE mwp_cmscontent
+    SET CONTENTDETAIL = 'http://www.makati.gov.ph' || CONTENTDETAIL
+    WHERE CONTENTTYPE = 3 AND CONTENTDETAIL LIKE '/%';
+
+
     -- MWP_CMSCONTENT END
 
     -- MWP_VIDEO START
@@ -719,6 +817,13 @@ BEGIN
         LEFT JOIN PORTAL.TBL_BLOG prev ON curr.TEMP_ID = prev.BLOG_ID
     )
     SET SPEECHCONTENT = BLOG_MESSAGE_CLOB;
+
+
+    -- APPEND ASSETS ON WYSIWIGS
+    --P0005
+    UPDATE mwp_mcspeeches
+        set speechcontent = replace(speechcontent,'../uploads','/assets/uploads')
+    WHERE speechcontent LIKE '%uploads%';
     -- MWP_MCSPEECHES END
 
 
@@ -814,6 +919,14 @@ BEGIN
 			WHERE cat.THREADCATEGORYNAME = 'News Discussions'
         )
         SET THREADCONTENT = THREAD_MESSAGE_CLOB;
+
+
+
+        -- APPENDS ASSETS ON UPLOADS FOLDER ON WYSIWIGS
+        -- P0006
+        UPDATE mwp_threadable
+            set threadcontent = replace(threadcontent,'../uploads','/assets/uploads')
+        WHERE threadcontent LIKE '%uploads%';
         -- NEWS DISCUSSONS END
 
 
@@ -1166,7 +1279,13 @@ BEGIN
         LEFT JOIN PORTAL.TBL_NEWS prev ON prev.NEWS_ID = curr.TEMP_ID
     )
     SET NEWSEXCERP = NEWS_BODY_CLOB;
-    -- UPDATE CONTENT
+
+    
+    -- APPEND ASSETS ON UPLOADS FOLDER
+    -- P0007        
+    UPDATE mwp_threadablenews
+        set newsexcerp = replace(newsexcerp,'../uploads','/assets/uploads')
+    WHERE newsexcerp LIKE '%uploads%';
     -- MWP_THREADABLENEWS END
 
     -- MWP_THREADABLEREPLY START
@@ -1271,7 +1390,13 @@ BEGIN
         LEFT JOIN MWP.MWP_IWANTTO curr ON prev.ONLINE_FORMS_ID = curr.TEMP_ID;
         -- APPLICATIONFORMS END
     -- MWP_IWANTTODTL END
-    COMMIT;
+
+    --APPEND ASSETS FOLDER ON ..uploads folder
+    -- P0004
+    update mwp_iwanttodtl 
+    set dtlcontent = replace(dtlcontent,'../uploads','/assets/uploads') 
+    WHERE dtlcontent like '%../uploads%';
+
     -- DROP ALL EMPTY ERROR TABLES
     for empty_table in error_tables
     loop
