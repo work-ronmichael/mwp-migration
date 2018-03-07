@@ -316,7 +316,6 @@ BEGIN
     update mwp_cmscontent 
         set contentdetail = replace(contentdetail,'../uploads','/assets/uploads') 
     WHERE contentdetail like '%../uploads%';
-        
 
     -- UPDATE URL LINKS TO START WITH http
     --UPDATE ALL the links WITHOUT slash on the begining
@@ -334,7 +333,17 @@ BEGIN
     SET CONTENTDETAIL = 'http://www.makati.gov.ph' || CONTENTDETAIL
     WHERE CONTENTTYPE = 3 AND CONTENTDETAIL LIKE '/%';
 
+    -- RELINK ALL CMS CONTENT WITH MAP DATA
+    UPDATE mwp_cmscontent
+    SET contentdetail = '/content/map'
+    WHERE
+    contentdetail like '%http://www.makati.gov.ph/portal/gismap/index.jsp%';
 
+
+    -- MANUALLY EDIT THE CONTENT FOR CMSCONTENT WITH TEMPID OF 841
+    -- SEE THIS FOR MOR INFO http://www.makati.gov.ph/portal/main/index.jsp?main=50&content=869&menu=0#.UmZSbnBmjTo
+
+    
     -- MWP_CMSCONTENT END
 
     -- MWP_VIDEO START
