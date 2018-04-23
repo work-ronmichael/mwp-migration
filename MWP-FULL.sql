@@ -1414,6 +1414,93 @@ BEGIN
 		  EXECUTE IMMEDIATE 'drop table ' || empty_table.table_name;
 		END IF;
 	end loop;
+
+
+
+    -- MHP MIGRATIONS
+
+    DBMS_ERRLOG.create_error_log ('MWP_MHP');
+    INSERT INTO mwp_mhp (
+            type,
+            lastname,
+            middlename,
+            firstname,
+            address,
+            barangay,
+            ownership,
+            birthdate,
+            civilstatus,
+            gender,
+            bloodtype,
+            contactno,
+            employmentstatus,
+            occupation,
+            employmenttype,
+            monthlyincome,
+            timestamp,
+            status,
+            emailaddress,
+            mobileno,
+            tempid
+        )
+        SELECT
+            mhp_type,
+            mhp_last_name,
+            mhp_middle_name,
+            mhp_first_name,
+            mhp_address,
+            mhp_barangay,
+            mhp_ownership,
+            mhp_birth_date,
+            mhp_civil_status,
+            mhp_gender,
+            mhp_blood_type,
+            mhp_contact_no,
+            mhp_employment_status,
+            mhp_occupation,
+            mhp_employment_type,
+            mhp_monthly_income,
+            mhp_timestamp,
+            mhp_status,
+            mhp_email_address,
+            mhp_mobile_no,
+            mhp_id
+        FROM
+            portal.tbl_mhp
+        LOG ERRORS INTO ERR$_MWP_MHP ('INSERT') REJECT LIMIT UNLIMITED;
+        
+
+
+        DBMS_ERRLOG.create_error_log ('MWP_MHP_DEPENDENT');
+        
+        INSERT INTO mwp_mhp_dependent (
+            lastname,
+            firstname,
+            middlename,
+            relation,
+            gender,
+            birthdate,
+            occupation,
+            mhp_id,
+            tempid
+        )
+        SELECT
+            dependent_last_name,
+            dependent_first_name,
+            dependent_middle_name,
+            dependent_relation,
+            dependent_gender,
+            dependent_birth_date,
+            dependent_occupation,
+            par.ID,
+            dependent_id
+        FROM portal.tbl_mhp_dependent chil
+        LEFT JOIN MWP.MWP_MHP par ON par.TEMPID = chil.MHP_ID
+        LOG ERRORS INTO ERR$_mwp_mhp_dependent ('INSERT') REJECT LIMIT UNLIMITED
+    -- END MHP MIGRATIONS
+
+
+
 END;
 
 
